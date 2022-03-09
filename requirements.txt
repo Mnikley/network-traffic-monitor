@@ -1,0 +1,5 @@
+fire==0.4.0
+psutil==5.9.0
+pynput==1.7.6
+six==1.16.0
+termcolor==1.1.0
