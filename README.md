@@ -6,17 +6,17 @@ A simple command-line based application to track network traffic
 2. Install dependencies: `pip install -r requirements.txt`
 
 # Usage
-The most forward method to start the network monitor (uses WiFi network per default):
+- The most forward method to start the network monitor (uses WiFi network per default):
 `python network_monitor.py`
-Display available network names:
+- Display available network names:
 `python network_monitor.py --lan_name=?`
-Select different network:
+- Select different network:
 `python network_monior.py --lan_name="Ethernet 4"`
-Enable logging to file:
+- Enable logging to file:
 `python network_monitor.py --log=True`
-Change update interval to 2s:
+- Change update interval to 2s:
 `python network_monitor.py --update_interval=2`
-Show help:
+- Show help:
 `python network_monitor.py --help`
 
 # Screenshots
