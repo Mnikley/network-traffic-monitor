@@ -1,3 +1,4 @@
+[![Total alerts](https://img.shields.io/lgtm/alerts/g/Mnikley/network-traffic-monitor.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/Mnikley/network-traffic-monitor/alerts/) [![Language grade: Python](https://img.shields.io/lgtm/grade/python/g/Mnikley/network-traffic-monitor.svg?logo=lgtm&logoWidth=18)](https://lgtm.com/projects/g/Mnikley/network-traffic-monitor/context:python)
 # network-traffic-monitor
 A simple command-line based application to track network traffic
 
