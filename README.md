@@ -22,3 +22,9 @@ A simple command-line based application to track network traffic
 
 # Screenshots
 <img width="364" alt="image" src="https://user-images.githubusercontent.com/75040444/157470543-58c88209-70de-437a-9a12-29aaf9050b9e.png">
+
+# Todo
+- non-global hotkeys
+- adapt mb/s when interval changes
+- select ethernet automatically if wifi not available
+- include `--lan-name` in message if network wasnt found
