@@ -4,15 +4,24 @@ from functools import partial
 from pynput.keyboard import Listener, Key, KeyCode
 import fire
 from datetime import datetime as dt
+import sys
+
+if sys.platform == "win32":
+    import pygetwindow as gw
 
 
-def to_mb(val):
+def to_mb(val, update_interval=None):
     """Convert bytes to MB with 2 decimals"""
-    return "{:0.2f}".format(val / 1024 / 1024)
+    tmp = 1
+    if update_interval:
+        tmp = 1/update_interval
+
+    return "{:0.2f}".format((val / 1024 / 1024) * tmp)
 
 
-def show_stats(first_timestamp=None, interim_timestamp=None, first_data=None, interim_data=None,
-               cent=None, text=None, last_data=None):
+def show_stats(first_timestamp: float = None, interim_timestamp: float = None,
+               first_data: psutil._common.snetio = None, interim_data: psutil._common.snetio = None,
+               cent: int = None, text: str = None, last_data: psutil._common.snetio = None):
     """Function called when pressing esc, q, space or s"""
     if text == "END STATISTICS":
         _ts = first_timestamp
@@ -39,13 +48,19 @@ def show_stats(first_timestamp=None, interim_timestamp=None, first_data=None, in
 def on_press_release(event):
     """Function for both (key down & key up) events"""
     global esc_pressed, space_pressed
+
+    # check if window is active to prohibit global hotkeys (windows only)
+    if sys.platform == "win32":
+        if "network_monitor" not in gw.getActiveWindowTitle():
+            return
+
     if event == Key.esc or event == KeyCode.from_char("q"):
         esc_pressed = True
     if event == Key.space or event == KeyCode.from_char("s"):
         space_pressed = True
 
 
-def run(lan_name="WiFi", update_interval=0.25, log=False):
+def run(lan_name="WiFi", update_interval=1, log=False):
     """Runs the network monitor
 
     Parameters
@@ -64,10 +79,22 @@ def run(lan_name="WiFi", update_interval=0.25, log=False):
 
     # prohibit invalid lan names
     available_objs = lo().keys()
+    if len(available_objs) == 0:
+        print("No Network adapters available.")
+        return
+
     if lan_name not in available_objs:
         tmp = "', '".join(available_objs)
-        print(f"Connection '{lan_name}' not available in: '{tmp}'")
-        return
+        fallback_connection = None
+        for f in list(available_objs):
+            if f.lower().startswith("eth"):
+                fallback_connection = f
+        if not fallback_connection:
+            fallback_connection = list(available_objs)[0]
+
+        print(f"Connection '{lan_name}' not available in: '{tmp}'. Using '{fallback_connection}' instead."
+              f" Use --lan_name='NAME' to change adapter manually.")
+        lan_name = fallback_connection
 
     # centering variable
     if update_interval < 1:
@@ -97,7 +124,8 @@ def run(lan_name="WiFi", update_interval=0.25, log=False):
         ts_one = lo()[lan_name]
         time.sleep(update_interval)
         ts_two = lo()[lan_name]
-        net_in, net_out = to_mb(ts_two.bytes_recv - ts_one.bytes_recv), to_mb(ts_two.bytes_sent - ts_one.bytes_sent)
+        net_in = to_mb(ts_two.bytes_recv - ts_one.bytes_recv, update_interval)
+        net_out = to_mb(ts_two.bytes_sent - ts_one.bytes_sent, update_interval)
 
         if print_header:
             print("NETWORK MONITOR".center(57+cent, "*"))
@@ -128,7 +156,7 @@ if __name__ == "__main__":
     esc_pressed = False
     space_pressed = False
 
-    # key-listener
+    # key-listenera
     listener = Listener(on_press=None, on_release=on_press_release)
     listener.start()
 
