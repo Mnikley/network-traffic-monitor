@@ -5,9 +5,11 @@ from pynput.keyboard import Listener, Key, KeyCode
 import fire
 from datetime import datetime as dt
 import sys
+import os
 
 if sys.platform == "win32":
     import pygetwindow as gw
+    os.system("")
 
 
 def to_mb(val, update_interval=None):
@@ -42,7 +44,7 @@ def show_stats(first_timestamp: float = None, interim_timestamp: float = None,
         print("*" * (57 + cent))
     elif text == "INTERIM STATISTICS":
         tmp = " elapsed: " + time_diff + " | received: " + total_in + " MB | sent: " + total_out + " MB "
-        print("\n" + tmp.center(57 + cent, "*"))
+        return tmp.center(57 + cent, "*")
 
 
 def on_press_release(event):
@@ -102,11 +104,23 @@ def run(lan_name="WiFi", update_interval=1, log=False):
     else:
         cent = 10
 
-    print_header = True
     first_data, interim_data = lo()[lan_name], lo()[lan_name]
     first_timestamp, interim_timestamp = time.time(), time.time()
 
     log_file_name = dt.now().strftime("network_traffic_%y-%m-%d_%H-%M-%S.log")
+
+    cursor_up = "\u001b[1A"
+    cursor_clear = "\u001b[2J"
+
+    # setup blank lines
+    total_rows = 5
+    print(f"\n" * total_rows)
+
+    # underlined strings
+    change_u = "\033[4m" + "C" + "\033[0m" + "hange"
+    quit_u = "\033[4m" + "Q" + "\033[0m" + "uit"
+    timestamp_u = "\033[4m" + "T" + "\033[0m" + "imestamp"
+    mbps_u = "\033[4m" + "M" + "\033[0m" + "B/s <> Mbps"
 
     while True:
         if esc_pressed:
@@ -114,8 +128,9 @@ def run(lan_name="WiFi", update_interval=1, log=False):
                        cent=cent, text="END STATISTICS", last_data=lo()[lan_name])
             break
         if space_pressed:
-            show_stats(interim_timestamp=interim_timestamp, interim_data=interim_data,
-                       cent=cent, text="INTERIM STATISTICS", last_data=lo()[lan_name])
+            TIMESTAMP = show_stats(interim_timestamp=interim_timestamp, interim_data=interim_data,
+                                   cent=cent, text="INTERIM STATISTICS", last_data=lo()[lan_name])
+
             interim_timestamp = time.time()
             interim_data = lo()[lan_name]
             space_pressed = False
@@ -127,15 +142,15 @@ def run(lan_name="WiFi", update_interval=1, log=False):
         net_in = to_mb(ts_two.bytes_recv - ts_one.bytes_recv, update_interval)
         net_out = to_mb(ts_two.bytes_sent - ts_one.bytes_sent, update_interval)
 
-        if print_header:
-            print("NETWORK MONITOR".center(57+cent, "*"))
-            print(f"{'TIMESTAMP'.center(cent)}| IN [MB/s] | OUT [MB/s] | TOTAL IN [MB] | TOTAL OUT [MB]")
-            print("-" * (57+cent))
-            print_header = False
-            if log:
-                with open(log_file_name, mode="a") as f:
-                    f.write("LOG START".center(57+cent, "*") + "\n" + "TIMESTAMP\tIN [MB/s]\tOUT [MB/s]\t"
-                                                                      "TOTAL IN [MB]\tTOTAL OUT [MB]\n")
+        # header
+        ROW_1 = f"Adapter: {lan_name} [{change_u}] | Update-Interval: {update_interval} [\u00B1]".center(57+cent, "*")
+        ROW_2 = "-" * (57+cent)
+        ROW_3 = f"{'TIME'.center(cent)}| IN [MB/s] | OUT [MB/s] | TOTAL IN [MB] | TOTAL OUT [MB]"
+        ROW_4 = "-" * (57+cent)
+        if log:
+            with open(log_file_name, mode="a") as f:
+                f.write("LOG START".center(57+cent, "*") + "\n" + "TIMESTAMP\tIN [MB/s]\tOUT [MB/s]\t"
+                                                                  "TOTAL IN [MB]\tTOTAL OUT [MB]\n")
 
         if update_interval < 1:
             tmp_time = dt.now().strftime("%H:%M:%S:%f")[:-4]
@@ -143,13 +158,14 @@ def run(lan_name="WiFi", update_interval=1, log=False):
             tmp_time = time.strftime("%H:%M:%S")
 
         # status
-        status = f"{tmp_time.center(cent)}| {net_in.center(9)} | {net_out.center(10)} | " \
-                 f"{to_mb(ts_two.bytes_recv).center(13)} | {to_mb(ts_two.bytes_sent).center(14)}"
-        print(status, end="\r")
+        ROW_5 = f"{tmp_time.center(cent)}| {net_in.center(9)} | {net_out.center(10)} | " \
+                f"{to_mb(ts_two.bytes_recv).center(13)} | {to_mb(ts_two.bytes_sent).center(14)}"
+
+        print(f"{TIMESTAMPS}{cursor_up * total_rows}{ROW_1}\n{ROW_2}\n{ROW_3}\n{ROW_4}\n{ROW_5}")
 
         if log:
             with open(log_file_name, mode="a") as f:
-                f.write(status.replace("|", "\t") + "\n")
+                f.write(ROW_5.replace("|", "\t") + "\n")
 
 
 if __name__ == "__main__":
